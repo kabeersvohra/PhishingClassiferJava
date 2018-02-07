@@ -10,10 +10,11 @@ public class PhishingClassifier {
         BufferedImage img = ImageIO.read(new File(args[1]));
         File http = new File(args[2]);
         Classification classification = classify(url, img, http);
+        System.out.println(classification.getLikelihood() + "%");
     }
 
-    private static Classification classify(String url, BufferedImage img, File http) {
-        Module module = null;
+    private static Classification classify(String url, BufferedImage img, File http) throws IOException {
+        Module module = new CantinaModule();
         return module.classify(url, img, http);
     }
 
