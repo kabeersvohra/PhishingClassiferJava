@@ -14,15 +14,22 @@ class RankedMap extends HashMap<Double, String> {
             return super.put(rank, word);
         else {
             final Double[] smallestRank = {Double.MAX_VALUE};
-            this.forEach((Double key, String value) -> {
-               if (key.compareTo(smallestRank[0]) < 0)
-                   smallestRank[0] = key;
+
+            this.keySet().forEach((Double key) -> {
+                if (key.compareTo(smallestRank[0]) < 0)
+                    smallestRank[0] = key;
             });
+
             if(rank.compareTo(smallestRank[0]) > 0) {
                 super.remove(smallestRank[0]);
                 return super.put(rank, word);
             }
             return "";
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.join(" ", this.values());
     }
 }

@@ -63,4 +63,15 @@ public class RankedMapTest {
         assertEquals(rankedMap.get(3.5), "hello");
     }
 
+    @Test
+    public void testToString() {
+        RankedMap rankedMap = new RankedMap(5);
+        rankedMap.put(1.0, "hello");
+        rankedMap.put(2.0, "hello");
+        rankedMap.put(3.0, "hello");
+        rankedMap.put(4.0, "hello");
+        rankedMap.put(5.0, "hello");
+        assertEquals(rankedMap.toString(), "hello hello hello hello hello");
+    }
+
 }
