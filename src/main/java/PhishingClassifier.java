@@ -14,7 +14,7 @@ public class PhishingClassifier {
     }
 
     private static Classification classify(String url, BufferedImage img, File http) throws IOException {
-        Module module = new CantinaModule();
+        Module module = new WordFrequencyModule();
         return module.classify(url, img, http);
     }
 

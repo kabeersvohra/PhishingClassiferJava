@@ -9,18 +9,14 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 import static org.apache.commons.io.FileUtils.listFiles;
 
 public class Util {
 
-    private static final String DICTIONARY_LOCATION = "data/dictionary.xml";
+    private static final String DICTIONARY_LOCATION = "data/dictionary.txt";
 
     static double tf(List<String> doc, String term) {
         double result = 0;
@@ -31,21 +27,10 @@ public class Util {
         return result / doc.size();
     }
 
-    static double idf(List<List<String>> docs, String term) {
-        double n = 0;
-        for (List<String> doc : docs) {
-            for (String word : doc) {
-                if (term.equalsIgnoreCase(word)) {
-                    n++;
-                    break;
-                }
-            }
-        }
-        return Math.log(docs.size() / n);
-    }
-
-    public static double tfIdf(List<String> doc, List<List<String>> docs, String term) {
-        return tf(doc, term) * idf(docs, term);
+    static double idf(WordDictionary dictionary, String term) {
+        Corpus corpus = dictionary.getCorpus();
+        int n = corpus.get(term) + 1;
+        return Math.log(dictionary.getNumberDocs() / n);
     }
 
     static List<String> queryGoogle(String query) throws IOException {
@@ -66,23 +51,49 @@ public class Util {
 
         return urlResults;
     }
+
+    static WordDictionary loadLocalDictionary() throws IOException {
+        BufferedReader dictionary = new BufferedReader(new FileReader(DICTIONARY_LOCATION));
+        double numberDocs = Double.parseDouble(dictionary.readLine().substring(1));
+        String data;
+        Corpus corpus = new Corpus();
+        while((data = dictionary.readLine()) != null) {
+           List<String> entry = Arrays.asList(data.split(" "));
+           corpus.put(entry.get(0), Integer.parseInt(entry.get(1)));
+        }
+        return new WordDictionary(numberDocs, corpus);
+    }
     
-    static void loadDictionaryLocally(String location) throws IOException, SAXException, ParserConfigurationException {
-        PrintWriter destination = new PrintWriter(DICTIONARY_LOCATION, "utf-8");
+    static void populateLocalDictionary(String location) throws IOException, SAXException, ParserConfigurationException {
+        PrintWriter destination = new PrintWriter(DICTIONARY_LOCATION);
         File source = new File(location);
+        HashMap<String, Integer> result = new HashMap<>();
+        HashSet<String> intermediary = new HashSet<>();
+        int numberDocs = 0;
         for (File fXmlFile : listFiles(source, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)) {
             if (!fXmlFile.getName().endsWith((".xml"))) {
                 break;
             }
+            numberDocs++;
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             org.w3c.dom.Document doc = dBuilder.parse(fXmlFile);
-
             NodeList nodes = doc.getElementsByTagName("w");
             for (int i = 0; i < nodes.getLength(); i++) {
-                destination.println(nodes.item(i).getTextContent());
+                intermediary.add(nodes.item(i).getTextContent().replaceAll("\\s+",""));
             }
+
+            intermediary.forEach(word -> {
+                if (!result.containsKey(word))
+                    result.put(word, 1);
+                else
+                    result.put(word, result.get(word) + 1);
+            });
         }
+        destination.println(numberDocs);
+        result.forEach((word,occurrences) -> {
+           destination.println(word + " " + occurrences);
+        });
         destination.close();
     }
 
